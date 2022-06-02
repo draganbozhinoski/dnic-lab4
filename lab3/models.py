@@ -18,7 +18,7 @@ class BlogPost(models.Model):
     title = models.CharField(max_length=50)
     writer = models.ForeignKey(CustomUser, on_delete=models.CASCADE, null=True, blank=True)
     content = models.CharField(max_length=50)
-    fajlovi = models.FileField()
+    fajlovi = models.FileField(upload_to='images/')
     date_created = models.DateField()
     last_modified = models.DateField()
 
