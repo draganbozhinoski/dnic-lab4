@@ -1,0 +1,85 @@
+{% extends 'index.html' %}
+{% block content %}
+    {% if error %}
+        <h1 class="text-danger"> {{ error }}</h1>
+    {% endif %}
+    {% if not error %}
+        <div class="container pb-5">
+            <div class="row mt-5">
+                <div class="col-5 rounded bg-white me-3">
+                    <div class="d-flex align-items-center flex-column">
+                        <img class="img rounded-circle mt-5 mb-3" style="width: 150px;height: 150px;"
+                             src="{{ MEDIA_URL }}{{ user.profile_photo.url }}">
+                        <h5>{{ user.first_name }} {{ user.last_name }}</h5>
+                        <h6 class="text-muted">{{ user.email }}</h6>
+                        <a href="{% url 'admin:lab3_customuser_change' user.id %}" class="btn btn-success mt-5">Edit
+                            Profile</a>
+                    </div>
+                </div>
+                <div class="col-6 rounded bg-white">
+                    <div class="row bg-light">
+                        <div class="col-12 text-center align-content-center justify-content-center">
+                            <h6 class="mt-1">Personal Information</h6>
+                        </div>
+                    </div>
+                    <div class="row my-3">
+                        {#                    date_of_birth,city,phone_number,email,first_name,last_name#}
+                        <div class="form-group">
+                            <label for="first_name">First Name</label>
+                            <input type="text" class="form-control" id="first_name" value="{{ user.first_name }}"
+                                   disabled>
+                        </div>
+                        <div class="form-group">
+                            <label for="last_name">Last Name</label>
+                            <input type="text" class="form-control" id="last_name" value="{{ user.last_name }}"
+                                   disabled>
+                        </div>
+                        <div class="form-group">
+                            <label for="date_birth">Date of Birth</label>
+                            <input type="text" class="form-control" id="date_birth" value="{{ user.date_of_birth }}"
+                                   disabled>
+                        </div>
+                        <div class="form-group">
+                            <label for="city">City</label>
+                            <input type="text" class="form-control" id="city" value="{{ user.city }}" disabled>
+                        </div>
+                        <div class="form-group">
+                            <label for="phone_number">Phone Number</label>
+                            <input type="text" class="form-control" id="phone_number" value="{{ user.phone_number }}"
+                                   disabled>
+                            <small class="form-text text-muted">Only administrators can see your phone number.</small>
+                        </div>
+                        <div class="form-group">
+                            <label for="email">E-mail</label>
+                            <input type="text" class="form-control" id="email" value="{{ user.email }}" disabled>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <h4 class="text-primary text-center">My Posts..</h4>
+        <div class="container w-50 pb-5">
+            {% for post in posts %}
+                <div class="rounded bg-white my-4 ms-0">
+                    <div class="row">
+                        <div class="col-2 mt-2 ms-2 pe-0">
+                            <img src="{{ MEDIA_URL }}{{ post.writer.profile_photo.url }}"
+                                 class="img img-thumbnail rounded-circle" style="width:40px;height: 40px;">
+                        </div>
+                        <div class="col-9 mt-3">
+                            {{ post.writer }}
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div class="col-11 ms-3 mt-3 pb-3">
+                            {{ post.content }}
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div class="col-11 text-muted text-center">{{ post.date_created }}</div>
+                    </div>
+                </div>
+            {% endfor %}
+        </div>
+    {% endif %}
+{% endblock %}

@@ -46,13 +46,40 @@ class CustomUserAdmin(admin.ModelAdmin):
 admin.site.register(CustomUser, CustomUserAdmin)
 
 
-class BlogPostCommentAdmin(admin.StackedInline):
+class BlogPostCommentAdminInline(admin.StackedInline):
+    exclude = ('comment_writer',)
     model = BlogPostComment
     extra = 0
+
+
+class BlogPostCommentAdmin(admin.ModelAdmin):  # napraven e model za da moze da si ima posebni permisii
+    # za dodavanje na komentar na drugi postovi.
+    exclude = ('comment_writer',)
+    list_display = ('comment_writer', 'sodrzhina')
+
+    def has_add_permission(self, request):
+        if CustomUser.objects.filter(user=request.user):
+            return True
+        return False
+
     def has_change_permission(self, request, obj=None):
-        return True
-    def has_add_permission(self, request, obj):
-        return True
+        if obj and (obj.comment_writer.user == request.user or obj.post.writer.user == request.user):
+            return True
+        return False
+
+    def has_delete_permission(self, request, obj=None):
+        if obj and obj.comment_writer.user == request.user:
+            return True
+        return False
+
+    def save_model(self, request, obj, form, change):
+        blog_user = CustomUser.objects.get(user=request.user)
+        if blog_user:
+            obj.comment_writer = blog_user
+        super().save_model(request, obj, form, change)
+
+
+admin.site.register(BlogPostComment, BlogPostCommentAdmin)
 
 
 class BlogPostAdmin(admin.ModelAdmin):
@@ -60,7 +87,7 @@ class BlogPostAdmin(admin.ModelAdmin):
     exclude = ('writer',)
     search_fields = ('title', 'content')
     list_filter = (('date_created', DateRangeFilter),)
-    inlines = [BlogPostCommentAdmin, ]
+    inlines = [BlogPostCommentAdminInline, ]
 
     def save_model(self, request, obj, form, change):
         blog_user = CustomUser.objects.get(user=request.user)
@@ -81,18 +108,23 @@ class BlogPostAdmin(admin.ModelAdmin):
     def has_view_permission(self, request, obj=None):
         if obj:
             if Blocked.objects.filter(
-                    user_blocker=obj.writer.user,
-                    user_blocked=request.user):
+                    user_blocker=obj.writer,
+                    user_blocked=CustomUser.objects.filter(user=request.user).first()):
                 return False
             return True
         return True
-
-    # TODO:So custom userite da se izmeni ^
 
     def has_add_permission(self, request):
         if CustomUser.objects.filter(user=request.user):
             return True
         return False
+
+    def save_formset(self, request, form, formset, change):
+        instances = formset.save(commit=False)
+        for instance in instances:
+            instance.comment_writer = CustomUser.objects.filter(user=request.user).first()
+        formset.save_m2m()
+        super().save_formset(request, form, formset, change)
 
 
 admin.site.register(BlogPost, BlogPostAdmin)
@@ -103,9 +135,14 @@ class BlockedAdmin(admin.ModelAdmin):
     exclude = ('user_blocker',)
 
     def save_model(self, request, obj, form, change):
-        blocker = User.objects.get(username=request.user.username)
+        blocker = CustomUser.objects.get(user=request.user)
         obj.user_blocker = blocker
         super().save_model(request, obj, form, change)
+
+    def has_add_permission(self, request):
+        if CustomUser.objects.filter(user=request.user):
+            return True
+        return False
 
 
 admin.site.register(Blocked, BlockedAdmin)
